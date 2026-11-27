@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EQUILIBRIUM QUEST 3D</title>
+<style>
+:root{--bg:#eef1ff;--panel:rgba(255,255,255,.86);--text:#12163a;--muted:#4a5080;--line:#c3c9f2;--cy:#0891b2;--vi:#6d28d9;--gr:#059669;--warn:#d97706;--bad:#dc2626;--font:"Chakra Petch","Trebuchet MS",system-ui,sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#070a22;--panel:rgba(14,19,58,.82);--text:#e8ecff;--muted:#9aa4d8;--line:#2b3580;--cy:#22d3ee;--vi:#a78bfa;--gr:#34d399;--warn:#fbbf24;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#070a22;--panel:rgba(14,19,58,.82);--text:#e8ecff;--muted:#9aa4d8;--line:#2b3580;--cy:#22d3ee;--vi:#a78bfa;--gr:#34d399;--warn:#fbbf24;--bad:#f87171}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5;min-height:100vh}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+main{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:16px}
+h1,h2,h3{margin:0 0 8px;line-height:1.15}
+.hero{text-align:center;padding:28px 0 12px}
+.hero h1{font-size:clamp(2.2rem,8vw,4.2rem);letter-spacing:.02em;color:var(--cy);text-shadow:0 0 22px color-mix(in srgb,var(--cy) 55%,transparent)}
+.hero p{color:var(--muted);margin:4px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:18px}
+.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;backdrop-filter:blur(6px)}
+button,.btn{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--cy);border-radius:10px;padding:10px 14px;cursor:pointer;min-height:44px}
+button:hover{background:color-mix(in srgb,var(--cy) 22%,var(--panel))}
+button:focus-visible,input:focus-visible{outline:3px solid var(--vi);outline-offset:2px}
+button.pri{background:var(--vi);color:#fff;border-color:var(--vi)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.menu button{width:100%;text-align:left;font-weight:600}
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+.stat{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:.9rem}.stat b{color:var(--gr)}
+.screen{display:none}.screen.on{display:block}
+.map{display:grid;gap:10px}.lv{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.lv.lock{opacity:.5}
+.opt{display:block;width:100%;text-align:left;margin:6px 0}
+.opt.ok{background:color-mix(in srgb,var(--gr) 30%,var(--panel));border-color:var(--gr)}
+.opt.no{background:color-mix(in srgb,var(--bad) 30%,var(--panel));border-color:var(--bad)}
+.lab{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:760px){.lab{grid-template-columns:1.1fr 1fr}}
+#box{width:100%;height:260px;border-radius:12px;border:1px solid var(--line);background:#050722;display:block}
+label{display:block;font-size:.9rem;margin-top:8px}input[type=range]{width:100%}
+input[type=number],input[type=text]{font:inherit;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;min-height:40px}
+.ind{font-weight:700;padding:8px;border-radius:10px;text-align:center;margin-top:8px;border:1px solid var(--line)}
+.chart{height:170px;position:relative;margin-top:8px}
+.badge{display:inline-block;padding:3px 10px;border:1px solid var(--vi);border-radius:20px;margin:2px;font-size:.85rem}
+.badge.off{opacity:.35;border-style:dashed}
+.cert{border:3px double var(--vi);padding:22px;text-align:center;background:var(--panel);border-radius:10px}
+.row2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.steps{background:color-mix(in srgb,var(--cy) 10%,transparent);padding:10px;border-radius:10px;font-size:.92rem;white-space:pre-wrap}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:24px 0}
+@media print{#bg,.bar,footer,.noprint{display:none!important}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap">
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<main>
+<div class="bar noprint" id="topbar" hidden>
+ <button onclick="go('home')">← Menu utama</button>
+ <div class="stat">Pemain: <b id="sName"></b> XP: <b id="sXP"></b> Kristal: <b id="sCr"></b> Gelar: <b id="sRank"></b></div>
+</div>
+
+<section class="screen on" id="home">
+ <div class="hero"><h1>EQUILIBRIUM QUEST 3D</h1><p>Petualangan Menjelajahi Dunia Kesetimbangan Kimia</p><p>Selamatkan Laboratorium Kesetimbangan dari reaksi yang tidak stabil.</p></div>
+ <div class="grid menu">
+  <button class="pri" onclick="startAdv()">Mulai petualangan</button>
+  <button onclick="go('map')">Peta dunia kimia</button>
+  <button onclick="go('materi')">Materi pembelajaran</button>
+  <button onclick="go('lab')">Laboratorium virtual</button>
+  <button onclick="go('map')">Misi dan tantangan</button>
+  <button onclick="go('prestasi')">Prestasi dan sertifikat</button>
+  <button onclick="go('petunjuk')">Petunjuk permainan</button>
+  <button onclick="go('set')">Pengaturan</button>
+  <button onclick="go('about')">Tentang aplikasi</button>
+ </div>
+ <footer>Dikembangkan oleh<br><b>Arham Benyamin Amali, S.Pd.</b><br><b>SMA Negeri 6 Luwu Utara</b></footer>
+</section>
+
+<section class="screen" id="map"><h2>Peta dunia kimia</h2><p>Selesaikan level secara berurutan. Lulus jika benar minimal 2 dari 3 soal.</p><div class="map" id="mapList"></div></section>
+
+<section class="screen" id="materi"><h2>Materi pembelajaran</h2><div id="matList" class="map"></div></section>
+
+<section class="screen" id="quiz"><div class="panel"><h2 id="qTitle"></h2><div id="qMat" class="steps"></div><div id="qBody"></div></div></section>
+
+<section class="screen" id="lab">
+ <h2>Laboratorium virtual</h2>
+ <div class="lab">
+  <div class="panel"><h3>Simulator Le Chatelier: N₂O₄ ⇌ 2NO₂ (endoterm)</h3>
+   <canvas id="box"></canvas>
+   <div class="stat"><span>N₂O₄ (biru): <b id="nA"></b></span><span>NO₂ (oranye): <b id="nB"></b></span></div>
+   <div class="ind" id="ind"></div>
+   <div class="chart"><canvas id="c1"></canvas></div><div class="chart"><canvas id="c2"></canvas></div>
+  </div>
+  <div class="panel"><h3>Kondisi reaksi</h3>
+   <div class="row2"><button onclick="addN('A')">+ 10 N₂O₄</button><button onclick="addN('B')">+ 10 NO₂</button></div>
+   <label>Suhu: <b id="tv">300</b> K<input id="T" type="range" min="250" max="400" value="300"></label>
+   <label>Volume: <b id="vv">1.0</b> L (tekanan ∝ 1/V)<input id="V" type="range" min="0.5" max="2" step="0.1" value="1"></label>
+   <label><input id="cat" type="checkbox"> Tambahkan katalis (mempercepat kedua arah)</label>
+   <p id="why" class="steps"></p>
+   <h3 style="margin-top:14px">Kalkulator Kc dan Kp</h3>
+   <p style="margin:0;font-size:.85rem;color:var(--muted)">aA + bB ⇌ cC + dD (isi koefisien dan konsentrasi saat setimbang)</p>
+   <div class="row2">
+    <label>a<input type="number" id="ka" value="1" min="1"></label><label>[A] M<input type="number" id="kA" value="0.4" step="any"></label>
+    <label>b<input type="number" id="kb" value="3" min="0"></label><label>[B] M<input type="number" id="kB" value="1.2" step="any"></label>
+    <label>c<input type="number" id="kc" value="2" min="1"></label><label>[C] M<input type="number" id="kC" value="0.8" step="any"></label>
+    <label>d<input type="number" id="kd" value="0" min="0"></label><label>[D] M<input type="number" id="kD" value="1" step="any"></label>
+   </div>
+   <label>Suhu (K)<input type="number" id="kT" value="500"></label>
+   <button class="pri" style="margin-top:8px" onclick="calcK()">Hitung</button>
+   <div id="calcOut" class="steps" style="margin-top:8px">Isi data lalu tekan Hitung.</div>
+  </div>
+ </div>
+</section>
+
+<section class="screen" id="prestasi"><h2>Prestasi dan pencapaian</h2><div id="badges"></div><h3 style="margin-top:16px">Sertifikat</h3><div id="certBox"></div></section>
+
+<section class="screen" id="petunjuk"><div class="panel"><h2>Petunjuk permainan</h2>
+<p>1. Isi nama pemain di Pengaturan. 2. Buka Peta, baca materi tiap level, lalu kerjakan misi. 3. Jawaban benar memberi XP dan Energy Crystal. 4. Kerjakan semua level untuk meraih gelar Master of Equilibrium. 5. Di Laboratorium, ubah suhu, volume, konsentrasi, dan katalis, lalu amati grafik dan indikator pergeseran.</p><p>Progres tersimpan otomatis di perangkat ini.</p></div></section>
+
+<section class="screen" id="set"><div class="panel"><h2>Pengaturan</h2>
+<label>Nama pemain<input type="text" id="pname" maxlength="30"></label>
+<div class="row2" style="margin-top:10px"><button onclick="saveName()">Simpan nama</button><button id="sndBtn" onclick="toggleSnd()"></button><button onclick="toggleTheme()">Ganti tema terang/gelap</button><button onclick="resetAll()">Hapus progres</button></div></div></section>
+
+<section class="screen" id="about"><div class="panel"><h2>Tentang aplikasi</h2><p><b>EQUILIBRIUM QUEST 3D – Petualangan Menjelajahi Dunia Kesetimbangan Kimia.</b> Game pembelajaran Kimia SMA/MA, Kurikulum Merdeka, materi Kesetimbangan Kimia.</p><p>Dikembangkan oleh:<br><b>Arham Benyamin Amali, S.Pd.</b><br><b>SMA Negeri 6 Luwu Utara</b></p></div></section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const RANKS=["Pemula","Bronze Chemist","Silver Chemist","Gold Chemist","Expert Chemist","Master of Equilibrium"];
+let S={name:"Ilmuwan Muda",xp:0,cr:0,done:{},best:{},snd:true};
+try{const r=localStorage.getItem("eq3d");if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem("eq3d",JSON.stringify(S))}catch(e){}};
+const nDone=()=>Object.keys(S.done).length;
+
+/* ---------- Konten ---------- */
+const LV=[
+{t:"Level 1 – The Gate of Reaction",s:"Reaksi reversibel",m:"Reaksi reversibel dapat berlangsung dua arah: reaktan menjadi produk dan produk kembali menjadi reaktan. Ditulis dengan tanda panah ⇌. Reaksi irreversibel hanya satu arah (→), misalnya pembakaran kertas. Contoh reversibel: N₂O₄ ⇌ 2NO₂.",
+ q:[["Tanda yang menunjukkan reaksi reversibel adalah…",["⇌","→","↑","↓"],0,"Panah dua arah ⇌ menandakan reaksi dapat berlangsung maju dan balik."],
+    ["Manakah reaksi reversibel?",["N₂ + 3H₂ ⇌ 2NH₃","Kertas terbakar menjadi abu","Besi berkarat menjadi serbuk","Telur matang"],0,"Pembentukan amonia berlangsung dua arah pada sistem tertutup."],
+    ["Reaksi irreversibel berarti…",["Produk tidak dapat kembali menjadi reaktan","Berlangsung dua arah","Selalu setimbang","Tidak melepas energi"],0,"Irreversibel: hanya berlangsung satu arah sampai reaktan habis."]]},
+{t:"Level 2 – The Dynamic Equilibrium Lab",s:"Kesetimbangan dinamis",m:"Pada kesetimbangan dinamis laju reaksi maju sama dengan laju reaksi balik, sehingga konsentrasi zat tetap (konstan) pada suhu tetap. Reaksi tidak berhenti; partikel terus bereaksi. Konsentrasi reaktan dan produk tidak harus sama.",
+ q:[["Pada kesetimbangan dinamis…",["Laju maju = laju balik","Reaksi berhenti","Konsentrasi reaktan = produk","Hanya reaksi maju berlangsung"],0,"Kesetimbangan ditandai laju maju sama dengan laju balik."],
+    ["Pada keadaan setimbang, konsentrasi zat…",["Tetap (konstan)","Terus naik","Terus turun","Nol"],0,"Perubahan netto nol sehingga konsentrasi konstan."],
+    ["Kesetimbangan hanya tercapai pada sistem…",["Tertutup","Terbuka","Vakum","Bersuhu berubah-ubah"],0,"Zat tidak boleh keluar dari sistem."]]},
+{t:"Level 3 – The Equilibrium Chamber",s:"Tetapan kesetimbangan",m:"Untuk aA + bB ⇌ cC + dD: Kc = [C]ᶜ[D]ᵈ / [A]ᵃ[B]ᵇ. Zat padat dan cair murni tidak ditulis. Kp memakai tekanan parsial gas. Kp = Kc(RT)^Δn, dengan Δn = koefisien gas produk − koefisien gas reaktan, R = 0,082 L·atm/mol·K.",
+ q:[["Kc untuk N₂ + 3H₂ ⇌ 2NH₃ adalah…",["[NH₃]² / ([N₂][H₂]³)","[N₂][H₂]³ / [NH₃]²","[NH₃] / ([N₂][H₂])","2[NH₃] / (3[H₂])"],0,"Koefisien menjadi pangkat; produk di pembilang."],
+    ["Pada 2A ⇌ B diketahui [A]=0,5 M dan [B]=1 M. Nilai Kc =",["4","0,5","2","0,25"],0,"Kc = [B]/[A]² = 1/0,25 = 4."],
+    ["Δn untuk N₂ + 3H₂ ⇌ 2NH₃ adalah…",["−2","2","0","−4"],0,"Δn = 2 − (1+3) = −2, sehingga Kp < Kc pada suhu normal."]]},
+{t:"Level 4 – Le Chatelier’s Challenge",s:"Pergeseran kesetimbangan",m:"Jika sistem setimbang diberi gangguan, kesetimbangan bergeser untuk mengurangi gangguan. Konsentrasi naik: bergeser menjauhi zat itu. Tekanan naik/volume turun: bergeser ke jumlah mol gas lebih kecil. Suhu naik: bergeser ke arah endoterm. Katalis tidak menggeser kesetimbangan; hanya mempercepat tercapainya.",
+ q:[["N₂ + 3H₂ ⇌ 2NH₃: tekanan dinaikkan, kesetimbangan bergeser ke…",["Kanan","Kiri","Tidak bergeser","Tidak dapat ditentukan"],0,"Kanan memiliki 2 mol gas, kiri 4 mol."],
+    ["Suhu dinaikkan pada reaksi eksoterm, kesetimbangan bergeser ke…",["Kiri","Kanan","Tidak bergeser","Naik Kc"],0,"Kenaikan suhu menggeser ke arah endoterm (balik); Kc turun."],
+    ["Penambahan katalis pada sistem setimbang…",["Tidak menggeser kesetimbangan","Menggeser ke kanan","Menggeser ke kiri","Mengubah Kc"],0,"Katalis mempercepat kedua arah sama besar."]]},
+{t:"Level 5 – The Master Chemist",s:"Tantangan akhir",m:"Gabungan Level 1–4. Proses Haber–Bosch: N₂ + 3H₂ ⇌ 2NH₃, ΔH negatif. Hasil amonia tinggi pada tekanan tinggi dan suhu rendah, tetapi suhu rendah membuat reaksi lambat, sehingga dipakai kompromi sekitar 400–500 °C dengan katalis besi.",
+ q:[["Mengapa Haber–Bosch memakai suhu sedang (±450 °C)?",["Kompromi hasil dan kecepatan reaksi","Agar Kc naik","Agar reaksi menjadi irreversibel","Agar tekanan turun"],0,"Suhu rendah menguntungkan hasil tetapi lambat; katalis membantu kecepatan."],
+    ["Pada 25 °C (298 K) Kc = 0,5 untuk N₂ + 3H₂ ⇌ 2NH₃ (R=0,082). Kp ≈",["8,4 × 10⁻⁴","0,5","2,4 × 10²","7,4"],0,"Kp = 0,5 × (0,082×298)⁻² = 0,5/597 ≈ 8,4×10⁻⁴."],
+    ["Grafik laju maju turun dan laju balik naik sampai mendatar saling berimpit menunjukkan…",["Tercapai kesetimbangan","Reaksi berhenti","Katalis habis","Reaksi irreversibel"],0,"Kedua laju sama dan konstan: kesetimbangan dinamis."]]}];
+
+/* ---------- Navigasi ---------- */
+function go(id){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on",s.id===id));$("topbar").hidden=id==="home";
+ if(id==="map")renderMap();if(id==="materi")renderMat();if(id==="prestasi")renderPres();if(id==="lab")initLab();if(id==="set"){$("pname").value=S.name;$("sndBtn").textContent="Suara: "+(S.snd?"hidup":"mati")}
+ hud();scrollTo(0,0)}
+function hud(){$("sName").textContent=S.name;$("sXP").textContent=S.xp;$("sCr").textContent=S.cr;$("sRank").textContent=RANKS[nDone()]}
+function startAdv(){let n=0;while(S.done[n])n++;n<5?openLevel(n):go("prestasi")}
+function renderMap(){$("mapList").innerHTML=LV.map((l,i)=>{const open=i===0||S.done[i-1];return `<div class="card lv ${open?"":"lock"}"><div><h3>${l.t}</h3><span>${l.s} ${S.done[i]?"· selesai, skor "+S.best[i]+"/3":open?"":"· terkunci"}</span></div><button class="pri" ${open?"":"disabled"} onclick="openLevel(${i})">${S.done[i]?"Ulangi misi":"Mulai misi"}</button></div>`}).join("")}
+function renderMat(){$("matList").innerHTML=LV.map(l=>`<div class="card"><h3>${l.t}</h3><p>${l.m}</p></div>`).join("")}
+
+/* ---------- Misi ---------- */
+let cur,qi,score,qs;
+const shuf=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+function openLevel(i){cur=i;qi=0;score=0;qs=shuf(LV[i].q.slice()).map(q=>{const o=q[1].map((t,k)=>({t,ok:k===q[2]}));return{q:q[0],o:shuf(o),w:q[3]}});
+ $("qTitle").textContent=LV[i].t;$("qMat").textContent=LV[i].m;go("quiz");$("topbar").hidden=false;hud();showQ()}
+function showQ(){const q=qs[qi];$("qBody").innerHTML=`<h3>Soal ${qi+1} dari 3</h3><p>${q.q}</p>`+q.o.map((o,k)=>`<button class="opt" onclick="ans(${k},this)">${o.t}</button>`).join("")+`<div id="fb"></div>`}
+function ans(k,b){const q=qs[qi],ok=q.o[k].ok;document.querySelectorAll(".opt").forEach((x,j)=>{x.disabled=true;if(q.o[j].ok)x.classList.add("ok")});if(!ok)b.classList.add("no");
+ if(ok){score++;S.xp+=20;S.cr+=1}beep(ok);save();hud();
+ $("fb").innerHTML=`<p class="steps">${ok?"Benar! +20 XP":"Belum tepat."} ${q.w}</p><button class="pri" onclick="nextQ()">${qi<2?"Soal berikutnya":"Lihat hasil"}</button>`}
+function nextQ(){qi++;if(qi<3)return showQ();const pass=score>=2;
+ if(pass){if(!S.done[cur])S.xp+=50;S.done[cur]=true;S.best[cur]=Math.max(S.best[cur]||0,score)}save();hud();
+ $("qBody").innerHTML=`<h3>${pass?"Level selesai!":"Belum lulus"}</h3><p>Skor ${score}/3. ${pass?(cur===4?"Kamu meraih gelar MASTER OF EQUILIBRIUM!":"Level berikutnya terbuka. Gelar: "+RANKS[nDone()]):"Baca materi lagi lalu coba kembali."}</p><div class="row2"><button class="pri" onclick="openLevel(${cur})">Ulangi</button><button onclick="go('${pass&&cur===4?"prestasi":"map"}')">${pass&&cur===4?"Lihat sertifikat":"Kembali ke peta"}</button></div>`}
+
+/* ---------- Prestasi ---------- */
+function renderPres(){$("badges").innerHTML=RANKS.slice(1).map((r,i)=>`<span class="badge ${S.done[i]?"":"off"}">${r}</span>`).join("")+`<p>XP ${S.xp} · Energy Crystal ${S.cr} · Level pemain ${1+Math.floor(S.xp/100)}</p>`;
+ $("certBox").innerHTML=nDone()===5?`<div class="cert"><h2>Sertifikat Penyelesaian</h2><p>Diberikan kepada</p><h1>${esc(S.name)}</h1><p>atas penyelesaian seluruh misi <b>EQUILIBRIUM QUEST 3D</b> dan meraih gelar<br><b>MASTER OF EQUILIBRIUM</b></p><p>Total XP ${S.xp}</p><small>Arham Benyamin Amali, S.Pd. · SMA Negeri 6 Luwu Utara</small></div><button class="pri noprint" onclick="print()" style="margin-top:8px">Cetak / simpan PDF</button>`:`<p>Selesaikan kelima level untuk membuka sertifikat.</p>`}
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- Pengaturan ---------- */
+function saveName(){const v=$("pname").value.trim().slice(0,30);if(!v)return alert("Nama tidak boleh kosong.");S.name=v;save();hud()}
+function toggleSnd(){S.snd=!S.snd;save();go("set")}
+function toggleTheme(){const r=document.documentElement,d=getComputedStyle(r).getPropertyValue("--bg").trim()==="#070a22";r.dataset.theme=d?"light":"dark"}
+function resetAll(){if(confirm("Hapus seluruh progres?")){S={name:S.name,xp:0,cr:0,done:{},best:{},snd:S.snd};save();hud()}}
+let AC;function beep(ok){if(!S.snd)return;try{AC=AC||new AudioContext();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=ok?660:200;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.15)}catch(e){}}
+
+/* ---------- Kalkulator ---------- */
+function calcK(){const g=i=>parseFloat($(i).value),a=g("ka"),b=g("kb"),c=g("kc"),d=g("kd"),A=g("kA"),B=g("kB"),C=g("kC"),D=g("kD"),T=g("kT");
+ if([a,b,c,d,A,B,C,D,T].some(isNaN)||A<=0||(b>0&&B<=0)||C<=0||(d>0&&D<=0)||T<=0||a<1||c<1)return $("calcOut").textContent="Input tidak valid: koefisien reaktan A dan produk C minimal 1, konsentrasi harus > 0, suhu > 0.";
+ const num=Math.pow(C,c)*(d>0?Math.pow(D,d):1),den=Math.pow(A,a)*(b>0?Math.pow(B,b):1),Kc=num/den,dn=c+d-a-b,Kp=Kc*Math.pow(0.082*T,dn),f=x=>x>=1e4||x<1e-3?x.toExponential(3):x.toPrecision(4);
+ $("calcOut").textContent=`Langkah 1: Kc = [C]^${c}${d?"[D]^"+d:""} / [A]^${a}${b?"[B]^"+b:""}\nLangkah 2: Kc = ${f(num)} / ${f(den)}\nHasil: Kc = ${f(Kc)}\nLangkah 3: Δn = ${c+d} − ${a+b} = ${dn}\nLangkah 4: Kp = Kc(RT)^Δn = ${f(Kc)} × (0,082×${T})^${dn}\nHasil: Kp = ${f(Kp)}\nMakna: ${Kc>1?"Kc > 1, produk lebih dominan saat setimbang.":Kc<1?"Kc < 1, reaktan lebih dominan saat setimbang.":"Kc ≈ 1, reaktan dan produk sebanding."}`}
+
+/* ---------- 3D latar ---------- */
+function mk(canvas,w,h,cam){const r=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});r.setPixelRatio(Math.min(devicePixelRatio,2));const s=new THREE.Scene(),c=new THREE.PerspectiveCamera(55,w/h,.1,100);c.position.z=cam;s.add(new THREE.AmbientLight(0xffffff,.6));const l=new THREE.PointLight(0xffffff,1.1);l.position.set(5,6,8);s.add(l);return{r,s,c}}
+const BG=mk($("bg"),innerWidth,innerHeight,14),mols=[];
+(function(){const cols=[0x22d3ee,0xa78bfa,0x34d399,0xf472b6];for(let i=0;i<26;i++){const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:cols[i%4],roughness:.3,metalness:.2}),n=2+i%2;
+ for(let k=0;k<n;k++){const a=new THREE.Mesh(new THREE.SphereGeometry(k?.3:.45,16,12),m);a.position.set(k*.55-.3,k%2*.2,0);g.add(a)}
+ g.position.set((Math.random()-.5)*26,(Math.random()-.5)*16,-Math.random()*8);g.userData={v:.003+Math.random()*.006,p:Math.random()*6};BG.s.add(g);mols.push(g)}})();
+function sizeBG(){BG.r.setSize(innerWidth,innerHeight,false);BG.c.aspect=innerWidth/innerHeight;BG.c.updateProjectionMatrix()}addEventListener("resize",sizeBG);sizeBG();
+
+/* ---------- Lab ---------- */
+let L=null;
+function initLab(){if(L)return;
+ const cv=$("box"),sc=mk(cv,cv.clientWidth||400,260,9),NM=360;
+ const gA=new THREE.SphereGeometry(.28,14,10),gB=new THREE.SphereGeometry(.17,12,8);
+ const iA=new THREE.InstancedMesh(gA,new THREE.MeshStandardMaterial({color:0x38bdf8}),NM),iB=new THREE.InstancedMesh(gB,new THREE.MeshStandardMaterial({color:0xfb923c}),NM);sc.s.add(iA,iB);
+ const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0x22d3ee}));sc.s.add(edge);
+ const P=[];L={sc,iA,iB,edge,P,nA:40,nB:20,sa:40,sb:20,t:0,f:0,r:0,hist:{k:[],a:[],b:[],rf:[],rr:[]},tick:0};
+ const mkC=(id,ds,yt)=>new Chart($(id),{type:"line",data:{labels:[],datasets:ds},options:{animation:false,responsive:true,maintainAspectRatio:false,elements:{point:{radius:0}},plugins:{legend:{labels:{boxWidth:10}}},scales:{x:{display:false},y:{beginAtZero:true,title:{display:true,text:yt}}}}});
+ L.c1=mkC("c1",[{label:"[N₂O₄]",data:[],borderColor:"#38bdf8"},{label:"[NO₂]",data:[],borderColor:"#fb923c"}],"Jumlah partikel / V");
+ L.c2=mkC("c2",[{label:"Laju maju",data:[],borderColor:"#34d399"},{label:"Laju balik",data:[],borderColor:"#f472b6"}],"Laju reaksi");
+ ["T","V","cat"].forEach(i=>$(i).addEventListener("input",upd));upd();
+ const d=new THREE.Object3D(),rnd=()=>Math.random()-.5;
+ function pos(arr,n){while(arr.length<n)arr.push({x:rnd()*2,y:rnd()*2,z:rnd()*2,vx:rnd()*.05,vy:rnd()*.05,vz:rnd()*.05});arr.length=n}
+ const pA=[],pB=[];
+ function frame(){requestAnimationFrame(frame);if(!$("lab").classList.contains("on"))return;
+  const V=+$("V").value,w=V*2.2,h=2.4,T=+$("T").value;
+  const sp=Math.sqrt(T/300);pos(pA,Math.min(L.nA,NM));pos(pB,Math.min(L.nB,NM));
+  edge.scale.set(w,h,h);
+  [[pA,iA],[pB,iB]].forEach(([arr,im])=>{arr.forEach((p,i)=>{p.x+=p.vx*sp;p.y+=p.vy*sp;p.z+=p.vz*sp;
+   if(Math.abs(p.x)>w/2-.2){p.vx*=-1;p.x=Math.sign(p.x)*(w/2-.2)}if(Math.abs(p.y)>h/2-.2){p.vy*=-1;p.y=Math.sign(p.y)*(h/2-.2)}if(Math.abs(p.z)>h/2-.2){p.vz*=-1;p.z=Math.sign(p.z)*(h/2-.2)}
+   d.position.set(p.x,p.y,p.z);d.updateMatrix();im.setMatrixAt(i,d.matrix)});im.count=arr.length;im.instanceMatrix.needsUpdate=true});
+  edge.rotation.y=iA.rotation.y=iB.rotation.y=Math.sin(performance.now()/4000)*.5;
+  sc.r.render(sc.s,sc.c);
+  mols.forEach(m=>{m.rotation.x+=m.userData.v;m.rotation.y+=m.userData.v*1.3;m.position.y+=Math.sin(performance.now()/1500+m.userData.p)*.003});BG.r.render(BG.s,BG.c)}
+ frame();setInterval(step,100);
+ new ResizeObserver(()=>{if(cv.clientWidth){sc.r.setSize(cv.clientWidth,260,false);sc.c.aspect=cv.clientWidth/260;sc.c.updateProjectionMatrix()}}).observe(cv)}
+const stoch=x=>Math.floor(x)+(Math.random()<x%1?1:0);
+function rates(){const T=+$("T").value,V=+$("V").value,c=$("cat").checked?3:1;
+ const kf=0.03*Math.exp((T-300)/45)*c,kr=0.0005*Math.exp((T-300)/150)*c;return{kf,kr,V,T}}
+function upd(){const{kf,kr,V,T}=rates();$("tv").textContent=T;$("vv").textContent=V.toFixed(1);L.K=kf/kr;
+ const el=$("why");el.textContent=`Kc saat ini = kf/kr = ${L.K.toFixed(1)}. Suhu naik menggeser ke kanan (reaksi endoterm). Volume diperkecil (tekanan naik) menggeser ke kiri (mol gas lebih sedikit). Katalis hanya mempercepat tercapainya setimbang.`}
+function addN(t){if(t==="A")L.nA=Math.min(L.nA+10,300);else L.nB=Math.min(L.nB+10,300)}
+function step(){if(!L||!$("lab").classList.contains("on"))return;const{kf,kr,V}=rates();
+ const f=kf*L.nA,r=kr*L.nB*L.nB/V;
+ for(let i=stoch(Math.min(f,L.nA));i>0&&L.nA>0;i--){L.nA--;L.nB+=2}
+ for(let i=stoch(Math.min(r/2,L.nB/2));i>0&&L.nB>=2;i--){L.nB-=2;L.nA++}
+ L.nA=Math.min(L.nA,300);L.nB=Math.min(L.nB,300);
+ L.sa=L.sa*.85+L.nA*.15;L.sb=L.sb*.85+L.nB*.15;L.tick++;
+ $("nA").textContent=L.nA;$("nB").textContent=L.nB;
+ const Q=L.sb*L.sb/(L.sa*V),K=kf/kr,e=$("ind"),ratio=Q/K;
+ if(ratio>1.12){e.textContent="Q > Kc: bergeser ke KIRI (menuju N₂O₄)";e.style.borderColor="#38bdf8"}else if(ratio<.88){e.textContent="Q < Kc: bergeser ke KANAN (menuju NO₂)";e.style.borderColor="#fb923c"}else{e.textContent="Q ≈ Kc: SETIMBANG (laju maju = laju balik)";e.style.borderColor="#34d399"}
+ const a=L.nA/V,b=L.nB/V;
+ [[L.c1,[a,b]],[L.c2,[f,r]]].forEach(([c,v])=>{c.data.labels.push(L.tick);v.forEach((x,i)=>c.data.datasets[i].data.push(+x.toFixed(2)));if(c.data.labels.length>120){c.data.labels.shift();c.data.datasets.forEach(s=>s.data.shift())}c.update("none")})}
+hud();
+</script>
+</body>
+</html>
