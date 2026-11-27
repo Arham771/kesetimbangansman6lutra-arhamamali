@@ -44,6 +44,7 @@ input[type=number],input[type=text]{font:inherit;background:var(--panel);color:v
 .cert{border:3px double var(--vi);padding:22px;text-align:center;background:var(--panel);border-radius:10px}
 .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .steps{background:color-mix(in srgb,var(--cy) 10%,transparent);padding:10px;border-radius:10px;font-size:.92rem;white-space:pre-wrap}
+#labReadout{display:inline-block;margin-top:5px;color:var(--muted)}
 footer{text-align:center;color:var(--muted);font-size:.85rem;padding:24px 0}
 @media print{#bg,.bar,footer,.noprint{display:none!important}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
@@ -91,6 +92,8 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:24px 0}
   </div>
   <div class="panel"><h3>Kondisi reaksi</h3>
    <div class="row2"><button onclick="addN('A')">+ 10 N₂O₄</button><button onclick="addN('B')">+ 10 NO₂</button></div>
+   <div class="row2" style="margin-top:8px"><button id="pauseLab" onclick="toggleLabPause()">Jeda simulasi</button><button onclick="resetLab()">Reset simulasi</button></div>
+   <div class="steps" style="margin-top:8px"><b>Persamaan reaksi:</b> N₂O₄(g) ⇌ 2NO₂(g) · ΔH &gt; 0 (arah ke kanan endoterm).<br><span id="labReadout">Menyiapkan data simulasi…</span></div>
    <label>Suhu: <b id="tv">300</b> K<input id="T" type="range" min="250" max="400" value="300"></label>
    <label>Volume: <b id="vv">1.0</b> L (tekanan ∝ 1/V)<input id="V" type="range" min="0.5" max="2" step="0.1" value="1"></label>
    <label><input id="cat" type="checkbox"> Tambahkan katalis (mempercepat kedua arah)</label>
@@ -204,9 +207,9 @@ const BG=mk($("bg"),innerWidth,innerHeight,14),mols=[];
 function sizeBG(){BG.r.setSize(innerWidth,innerHeight,false);BG.c.aspect=innerWidth/innerHeight;BG.c.updateProjectionMatrix()}addEventListener("resize",sizeBG);sizeBG();
 
 /* ---------- Lab ---------- */
-let L=null;
+let L=null,labPaused=false,labTimer=null;
 function initLab(){if(L)return;
- const cv=$("box"),sc=mk(cv,cv.clientWidth||400,260,9),NM=360;
+ const cv=$("box"),sc=mk(cv,cv.clientWidth||400,260,9),NM=360;labPaused=false;if($("pauseLab"))$("pauseLab").textContent="Jeda simulasi";
  const gA=new THREE.SphereGeometry(.28,14,10),gB=new THREE.SphereGeometry(.17,12,8);
  const iA=new THREE.InstancedMesh(gA,new THREE.MeshStandardMaterial({color:0x38bdf8}),NM),iB=new THREE.InstancedMesh(gB,new THREE.MeshStandardMaterial({color:0xfb923c}),NM);sc.s.add(iA,iB);
  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0x22d3ee}));sc.s.add(edge);
@@ -228,13 +231,17 @@ function initLab(){if(L)return;
   edge.rotation.y=iA.rotation.y=iB.rotation.y=Math.sin(performance.now()/4000)*.5;
   sc.r.render(sc.s,sc.c);
   mols.forEach(m=>{m.rotation.x+=m.userData.v;m.rotation.y+=m.userData.v*1.3;m.position.y+=Math.sin(performance.now()/1500+m.userData.p)*.003});BG.r.render(BG.s,BG.c)}
- frame();setInterval(step,100);
+ frame();labTimer=setInterval(()=>{if(!labPaused)step()},100);
  new ResizeObserver(()=>{if(cv.clientWidth){sc.r.setSize(cv.clientWidth,260,false);sc.c.aspect=cv.clientWidth/260;sc.c.updateProjectionMatrix()}}).observe(cv)}
 const stoch=x=>Math.floor(x)+(Math.random()<x%1?1:0);
 function rates(){const T=+$("T").value,V=+$("V").value,c=$("cat").checked?3:1;
  const kf=0.03*Math.exp((T-300)/45)*c,kr=0.0005*Math.exp((T-300)/150)*c;return{kf,kr,V,T}}
 function upd(){const{kf,kr,V,T}=rates();$("tv").textContent=T;$("vv").textContent=V.toFixed(1);L.K=kf/kr;
- const el=$("why");el.textContent=`Kc saat ini = kf/kr = ${L.K.toFixed(1)}. Suhu naik menggeser ke kanan (reaksi endoterm). Volume diperkecil (tekanan naik) menggeser ke kiri (mol gas lebih sedikit). Katalis hanya mempercepat tercapainya setimbang.`}
+ const el=$("why");el.textContent=`Kc model = kf/kr = ${L.K.toFixed(2)}. Suhu naik menggeser ke kanan (arah endoterm). Volume diperkecil (tekanan naik) menggeser ke kiri karena sisi kiri memiliki mol gas lebih sedikit. Katalis mempercepat kedua arah tanpa mengubah Kc.`;
+ if(L&&$("labReadout"))$("labReadout").textContent=`Model saat ini: Kc = ${L.K.toFixed(2)} · suhu ${T} K · volume ${V.toFixed(1)} L · katalis ${$("cat").checked?"aktif":"nonaktif"}.`;
+}
+function toggleLabPause(){labPaused=!labPaused;$("pauseLab").textContent=labPaused?"Lanjutkan simulasi":"Jeda simulasi"}
+function resetLab(){if(!L)return;L.nA=40;L.nB=20;L.sa=40;L.sb=20;L.tick=0;L.hist={k:[],a:[],b:[],rf:[],rr:[]};[L.c1,L.c2].forEach(c=>{c.data.labels=[];c.data.datasets.forEach(d=>d.data=[]);c.update("none")});labPaused=false;$("pauseLab").textContent="Jeda simulasi";$("labReadout").textContent="Simulasi direset ke kondisi awal: 40 partikel N₂O₄ dan 20 partikel NO₂."}
 function addN(t){if(t==="A")L.nA=Math.min(L.nA+10,300);else L.nB=Math.min(L.nB+10,300)}
 function step(){if(!L||!$("lab").classList.contains("on"))return;const{kf,kr,V}=rates();
  const f=kf*L.nA,r=kr*L.nB*L.nB/V;
@@ -246,6 +253,7 @@ function step(){if(!L||!$("lab").classList.contains("on"))return;const{kf,kr,V}=
  const Q=L.sb*L.sb/(L.sa*V),K=kf/kr,e=$("ind"),ratio=Q/K;
  if(ratio>1.12){e.textContent="Q > Kc: bergeser ke KIRI (menuju N₂O₄)";e.style.borderColor="#38bdf8"}else if(ratio<.88){e.textContent="Q < Kc: bergeser ke KANAN (menuju NO₂)";e.style.borderColor="#fb923c"}else{e.textContent="Q ≈ Kc: SETIMBANG (laju maju = laju balik)";e.style.borderColor="#34d399"}
  const a=L.nA/V,b=L.nB/V;
+ if($("labReadout"))$("labReadout").textContent=`[N₂O₄] ≈ ${a.toFixed(2)} unit/L · [NO₂] ≈ ${b.toFixed(2)} unit/L · Qc = ${Q.toFixed(2)} · Kc = ${K.toFixed(2)} · ${Math.abs(ratio-1)<=.12?"mendekati setimbang":ratio>1?"Qc > Kc: bergeser ke kiri":"Qc < Kc: bergeser ke kanan"}.`;
  [[L.c1,[a,b]],[L.c2,[f,r]]].forEach(([c,v])=>{c.data.labels.push(L.tick);v.forEach((x,i)=>c.data.datasets[i].data.push(+x.toFixed(2)));if(c.data.labels.length>120){c.data.labels.shift();c.data.datasets.forEach(s=>s.data.shift())}c.update("none")})}
 hud();
 </script>
